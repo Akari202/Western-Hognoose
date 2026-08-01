@@ -56,7 +56,7 @@ def get_json(
     timeout: int = DEFAULT_TIMEOUT,
     use_cache: bool = True,
 ) -> Dict[str, Any]:
-    url = _upgrade_to_https(url)
+    url = upgrade_to_https(url)
     req_headers = DEFAULT_HEADERS.copy()
     if headers:
         req_headers.update(headers)
@@ -93,7 +93,7 @@ def force_fetch_json(
 def pop_cached_json(
     url: str, default: Optional[Dict[str, Any]] = None
 ) -> Optional[Dict[str, Any]]:
-    url = _upgrade_to_https(url)
+    url = upgrade_to_https(url)
     cache = _get_cache()
 
     cached_data = cache.pop(url, None)
