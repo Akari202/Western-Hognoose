@@ -6,31 +6,34 @@ from typing import Any, Dict, Optional
 from disk_dict import DiskDict
 
 
-_cache_instance: Optional[DiskDict] = None
-_cache_filename: str = "./cache/json_cache.json"
+_cache_instances: Dict[str, DiskDict] = {}
+_cache_filenames: Dict[str, str] = {"default": "./cache/json_cache.json"}
 
-DEFAULT_HEADERS = {
+DEFAULT_HEADERS: Dict[str, str] = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (akari202@akada.dev)"
 }
-DEFAULT_TIMEOUT = 10
+DEFAULT_TIMEOUT: int = 10
 
 
-def set_cache_file(filename: str) -> None:
-    global _cache_instance, _cache_filename
-    _cache_filename = filename
-    _cache_instance = DiskDict(filename=filename)
+def set_cache_file(filename: str, cache_type: str = "default") -> None:
+    global _cache_filenames, _cache_instances
+    _cache_filenames[cache_type] = filename
+    _cache_instances[cache_type] = DiskDict(filename=filename)
 
 
-def set_cache_instance(instance: DiskDict) -> None:
-    global _cache_instance
-    _cache_instance = instance
+def set_cache_instance(instance: DiskDict, cache_type: str = "default") -> None:
+    global _cache_instances
+    _cache_instances[cache_type] = instance
 
 
-def _get_cache() -> DiskDict:
-    global _cache_instance
-    if _cache_instance is None:
-        _cache_instance = DiskDict(filename=_cache_filename)
-    return _cache_instance
+def _get_cache(cache_type: str = "default") -> DiskDict:
+    global _cache_instances
+    if cache_type not in _cache_instances:
+        filename = _cache_filenames.get(
+            cache_type, f"./cache/{cache_type}_json_cache.json"
+        )
+        _cache_instances[cache_type] = DiskDict(filename=filename)
+    return _cache_instances[cache_type]
 
 
 def upgrade_to_https(url: str) -> str:
@@ -55,13 +58,14 @@ def get_json(
     headers: Optional[Dict[str, str]] = None,
     timeout: int = DEFAULT_TIMEOUT,
     use_cache: bool = True,
+    cache_type: str = "default",
 ) -> Dict[str, Any]:
     url = upgrade_to_https(url)
     req_headers = DEFAULT_HEADERS.copy()
     if headers:
         req_headers.update(headers)
 
-    cache = _get_cache()
+    cache = _get_cache(cache_type)
 
     if not use_cache:
         info(f"Cache disabled, fetching fresh json from {url}")
@@ -86,18 +90,29 @@ def force_fetch_json(
     url: str,
     headers: Optional[Dict[str, str]] = None,
     timeout: int = DEFAULT_TIMEOUT,
+    cache_type: str = "default",
 ) -> Dict[str, Any]:
-    return get(url, headers=headers, timeout=timeout, use_cache=False)
+    return get_json(
+        url, headers=headers, timeout=timeout, use_cache=False, cache_type=cache_type
+    )
 
 
 def pop_cached_json(
-    url: str, default: Optional[Dict[str, Any]] = None
+    url: str,
+    default: Optional[Dict[str, Any]] = None,
+    cache_type: str = "default",
 ) -> Optional[Dict[str, Any]]:
     url = upgrade_to_https(url)
-    cache = _get_cache()
+    cache = _get_cache(cache_type)
 
     cached_data = cache.pop(url, None)
     if cached_data is None:
         return default
 
     return cached_data
+
+
+def clear_cache(cache_type: str = "default") -> None:
+    cache = _get_cache(cache_type)
+    cache.clear()
+    info(f"Cleared all entries from the {cache_type} cache")
