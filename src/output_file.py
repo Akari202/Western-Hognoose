@@ -10,8 +10,6 @@ class OutputFile:
         self.filename = filename
 
         self._file = open(self.filename, "w", encoding="utf-8")
-        # self._file.write("{\n")
-        # self.flush()
 
         atexit.register(self.close)
 
@@ -27,8 +25,6 @@ class OutputFile:
         os.fsync(self._file.fileno())
 
     def close(self):
-        # self._file.write("}\n")
-        # self.flush()
         self._file.close()
         self._file = None
         atexit.unregister(self.close)

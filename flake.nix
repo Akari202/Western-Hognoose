@@ -2,7 +2,8 @@
   description = "Reusable Python helper utilities";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
   };
 
   outputs = {
@@ -26,6 +27,15 @@
         ];
 
         propagatedBuildInputs = [];
+
+        # nativeCheckInputs = with pkgs.python3.pkgs; [
+        #   pytestCheckHook
+        #   pytest-mock
+        # ];
+        #
+        # doCheck = true;
+        #
+        # pytestFlagsArray = ["src/test.py"];
       };
     });
   };
